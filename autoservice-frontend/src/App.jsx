@@ -1,13 +1,13 @@
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login.jsx';                    // Добавлено .jsx
-import Requests from './pages/Requests.jsx';              // Добавлено .jsx
-import CreateRequest from './pages/CreateRequest.jsx';    // Добавлено .jsx
-import RequestDetails from './pages/RequestDetails.jsx';  // Добавлено .jsx
-import Reports from './pages/Reports.jsx';                // Добавлено .jsx
-import QualityDashboard from './pages/QualityDashboard.jsx'; // Добавлено .jsx
-import Navbar from './components/Navbar.jsx';             // Добавлено .jsx
-import ProtectedRoute from './components/ProtectedRoute.jsx'; // Добавлено .jsx
+import Login from './pages/Login.jsx';                   
+import Requests from './pages/Requests.jsx';             
+import CreateRequest from './pages/CreateRequest.jsx';    
+import RequestDetails from './pages/RequestDetails.jsx'; 
+import Reports from './pages/Reports.jsx';               
+import QualityDashboard from './pages/QualityDashboard.jsx'; 
+import Navbar from './components/Navbar.jsx';             
+import ProtectedRoute from './components/ProtectedRoute.jsx'; 
 import './App.css';
 
 function App() {
