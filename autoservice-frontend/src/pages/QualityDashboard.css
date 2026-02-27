@@ -1,0 +1,167 @@
+.quality-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.quality-container h1 {
+    margin-bottom: 30px;
+    color: #333;
+}
+
+.quality-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 30px;
+}
+
+.masters-section,
+.delayed-section {
+    background: white;
+    padding: 20px;
+    border-radius: 8px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.masters-section h2,
+.delayed-section h2 {
+    margin-bottom: 20px;
+    color: #333;
+}
+
+.masters-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.master-card {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.master-info h3 {
+    margin: 0;
+    font-size: 16px;
+    color: #333;
+}
+
+.master-info p {
+    margin: 5px 0 0;
+    font-size: 12px;
+    color: #999;
+}
+
+.master-load {
+    flex: 0 0 200px;
+}
+
+.load-bar {
+    height: 10px;
+    background: #e9ecef;
+    border-radius: 5px;
+    overflow: hidden;
+    margin-bottom: 5px;
+}
+
+.load-fill {
+    height: 100%;
+    transition: width 0.3s ease;
+}
+
+.load-count {
+    font-size: 12px;
+    color: #666;
+}
+
+.delayed-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    max-height: 500px;
+    overflow-y: auto;
+}
+
+.delayed-card {
+    background: #fff3f3;
+    border: 1px solid #ffcdd2;
+    border-radius: 8px;
+    padding: 15px;
+}
+
+.delayed-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 10px;
+}
+
+.request-id {
+    font-weight: bold;
+    color: #333;
+}
+
+.delayed-badge {
+    padding: 4px 8px;
+    background: #dc3545;
+    color: white;
+    border-radius: 4px;
+    font-size: 12px;
+}
+
+.delayed-body {
+    margin-bottom: 15px;
+}
+
+.delayed-body p {
+    margin: 5px 0;
+    font-size: 14px;
+    color: #666;
+}
+
+.delayed-actions {
+    display: flex;
+    gap: 10px;
+}
+
+.btn-extend,
+.btn-reassign,
+.btn-view {
+    padding: 8px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 12px;
+    flex: 1;
+}
+
+.btn-extend {
+    background: #ffc107;
+    color: #333;
+}
+
+.btn-extend:hover {
+    background: #e0a800;
+}
+
+.btn-reassign {
+    background: #17a2b8;
+    color: white;
+}
+
+.btn-reassign:hover {
+    background: #138496;
+}
+
+.btn-view {
+    background: #6c757d;
+    color: white;
+}
+
+.btn-view:hover {
+    background: #5a6268;
+}

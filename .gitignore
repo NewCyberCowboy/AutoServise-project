@@ -1,0 +1,16 @@
+# backend
+bin/
+obj/
+.vs/
+
+# frontend
+node_modules/
+build/
+dist/
+
+# report
+*.tmp
+
+# system
+.DS_Store
+Thumbs.db
