@@ -11,7 +11,7 @@ function QualityDashboard() {
     const user = JSON.parse(localStorage.getItem('user') || '{}');
 
     useEffect(() => {
-        if (user.role !== 'Администратор') {
+        if (user.role !== 'Администратор' && user.role !== 'Менеджер') {
             navigate('/requests');
             return;
         }
@@ -65,7 +65,7 @@ function QualityDashboard() {
     if (loading) return <div className="loading">Загрузка...</div>;
 
     return (
-        <div className="quality-container">
+        <div className="page-container">
             <h1>Контроль качества</h1>
 
             <div className="quality-grid">

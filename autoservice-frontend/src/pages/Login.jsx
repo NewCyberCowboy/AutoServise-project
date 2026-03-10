@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import './Login.css';
 
@@ -15,14 +15,12 @@ function Login() {
             const response = await api.post('/auth/login', { login, password });
             const user = response.data;
 
-            // Сохраняем пользователя в localStorage
             localStorage.setItem('user', JSON.stringify({
                 id: user.userId,
                 fio: user.fio,
                 role: user.type
             }));
 
-            // Перенаправляем в зависимости от роли
             if (user.type === 'Администратор') {
                 navigate('/reports');
             } else if (user.type === 'Автомеханик') {
@@ -61,6 +59,9 @@ function Login() {
                     </div>
                     <button type="submit" className="btn-login">Войти</button>
                 </form>
+                <div className="register-link">
+                    <p>Нет аккаунта? <Link to="/register">Зарегистрироваться</Link></p>
+                </div>
                 <div className="demo-accounts">
                     <p>Тестовые аккаунты:</p>
                     <p>Админ: admin/admin</p>

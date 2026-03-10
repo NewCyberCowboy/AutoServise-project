@@ -40,7 +40,7 @@ function Reports() {
     if (loading) return <div className="loading">Загрузка...</div>;
 
     return (
-        <div className="reports-container">
+        <div className="page-container">
             <h1>Отчеты и статистика</h1>
 
             <div className="stats-grid">

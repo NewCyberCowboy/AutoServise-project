@@ -1,5 +1,10 @@
 ﻿using BackendAutoSericeCar.Data;
+using BackendAutoSericeCar.Models;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BackendAutoSericeCar.Controllers
 {
@@ -7,15 +12,26 @@ namespace BackendAutoSericeCar.Controllers
     [ApiController]
     public class QualityController : ControllerBase
     {
-        [HttpPut("extend/{id}")]
-        public IActionResult ExtendDeadline(int id, [FromBody] int days)
+        private readonly AppDbContext _context;
+
+        public QualityController(AppDbContext context)
         {
+            _context = context;
+        }
+
+        [HttpPut("extend/{id}")]
+        public async Task<IActionResult> ExtendDeadline(int id, [FromBody] int days)
+        {
+            await Dt.LoadFromDatabaseAsync(_context);
+
             var request = Dt.Requests.FirstOrDefault(r => r.RequestId == id);
             if (request == null)
                 return NotFound();
 
             request.PlannedCompletionDate = request.PlannedCompletionDate.AddDays(days);
             request.IsDelayed = false;
+
+            await Dt.UpdateRequestAsync(_context, request);
 
             return Ok(new
             {
@@ -26,8 +42,10 @@ namespace BackendAutoSericeCar.Controllers
         }
 
         [HttpPut("assign/{id}")]
-        public IActionResult AssignMaster(int id, [FromBody] int masterId)
+        public async Task<IActionResult> AssignMaster(int id, [FromBody] int masterId)
         {
+            await Dt.LoadFromDatabaseAsync(_context);
+
             var request = Dt.Requests.FirstOrDefault(r => r.RequestId == id);
             if (request == null)
                 return NotFound();
@@ -39,6 +57,8 @@ namespace BackendAutoSericeCar.Controllers
             request.MasterId = masterId;
             request.RequestStatus = "В работе";
 
+            await Dt.UpdateRequestAsync(_context, request);
+
             return Ok(new
             {
                 request.RequestId,
@@ -49,8 +69,10 @@ namespace BackendAutoSericeCar.Controllers
         }
 
         [HttpGet("masters")]
-        public IActionResult GetMasters()
+        public async Task<IActionResult> GetMasters()
         {
+            await Dt.LoadFromDatabaseAsync(_context);
+
             var masters = Dt.Users
                 .Where(u => u.Type == "Автомеханик")
                 .Select(u => new
@@ -59,7 +81,55 @@ namespace BackendAutoSericeCar.Controllers
                     u.Fio,
                     ActiveRequests = Dt.Requests.Count(r => r.MasterId == u.UserId && r.RequestStatus != "Завершена")
                 });
+
             return Ok(masters);
+        }
+
+        [HttpPut("unassign/{id}")]
+        public async Task<IActionResult> UnassignMaster(int id)
+        {
+            await Dt.LoadFromDatabaseAsync(_context);
+
+            var request = Dt.Requests.FirstOrDefault(r => r.RequestId == id);
+            if (request == null)
+                return NotFound();
+
+            request.MasterId = null;
+            request.RequestStatus = "Новая";
+
+            await Dt.UpdateRequestAsync(_context, request);
+
+            return Ok(new
+            {
+                request.RequestId,
+                request.MasterId,
+                message = "Механик отстранён от заявки"
+            });
+        }
+
+        [HttpPut("deadline/{id}")]
+        public async Task<IActionResult> SetDeadline(int id, [FromBody] DateTime newDeadline)
+        {
+            await Dt.LoadFromDatabaseAsync(_context);
+
+            var request = Dt.Requests.FirstOrDefault(r => r.RequestId == id);
+            if (request == null)
+                return NotFound();
+
+            if (newDeadline < DateTime.UtcNow.Date)
+                return BadRequest(new { message = "Новая дата должна быть не ранее сегодняшней" });
+
+            request.PlannedCompletionDate = newDeadline;
+            request.IsDelayed = newDeadline < DateTime.UtcNow;
+
+            await Dt.UpdateRequestAsync(_context, request);
+
+            return Ok(new
+            {
+                request.RequestId,
+                request.PlannedCompletionDate,
+                message = "Плановая дата обновлена"
+            });
         }
     }
 }

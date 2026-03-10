@@ -50,7 +50,7 @@ function Requests() {
     if (loading) return <div className="loading">Загрузка...</div>;
 
     return (
-        <div className="requests-container">
+        <div className="page-container requests-container">
             <div className="requests-header">
                 <h1>Заявки на ремонт</h1>
                 {user.role === 'Клиент' && (

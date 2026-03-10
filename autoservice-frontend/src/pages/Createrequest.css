@@ -87,3 +87,17 @@
     margin-bottom: 20px;
     text-align: center;
 }
+
+.btn-submit:disabled,
+.btn-cancel:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.btn-submit:disabled:hover {
+    background: #667eea;
+}
+
+.btn-cancel:disabled:hover {
+    background: #6c757d;
+}

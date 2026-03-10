@@ -22,7 +22,13 @@ function Navbar() {
                 <Link to="/requests" className="nav-link">Заявки</Link>
                 {user.role === 'Администратор' && (
                     <>
+                        <Link to="/users" className="nav-link">Управление пользователями</Link>
                         <Link to="/reports" className="nav-link">Отчеты</Link>
+                        <Link to="/quality" className="nav-link">Контроль качества</Link>
+                    </>
+                )}
+                {user.role === 'Менеджер' && (
+                    <>
                         <Link to="/quality" className="nav-link">Контроль качества</Link>
                     </>
                 )}

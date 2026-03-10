@@ -1,5 +1,8 @@
 ﻿using BackendAutoSericeCar.Data;
 using Microsoft.AspNetCore.Mvc;
+using System;
+using System.Linq;
+using System.Threading.Tasks;
 
 namespace BackendAutoSericeCar.Controllers
 {
@@ -7,9 +10,18 @@ namespace BackendAutoSericeCar.Controllers
     [ApiController]
     public class ReportController : ControllerBase
     {
-        [HttpGet("count")]
-        public IActionResult GetRequestsCount()
+        private readonly AppDbContext _context;
+
+        public ReportController(AppDbContext context)
         {
+            _context = context;
+        }
+
+        [HttpGet("count")]
+        public async Task<IActionResult> GetRequestsCount()
+        {
+            await Dt.LoadFromDatabaseAsync(_context);
+
             var total = Dt.Requests.Count;
             var inProgress = Dt.Requests.Count(r => r.RequestStatus == "В работе");
             var completed = Dt.Requests.Count(r => r.RequestStatus == "Завершена");
@@ -18,8 +30,10 @@ namespace BackendAutoSericeCar.Controllers
         }
 
         [HttpGet("average")]
-        public IActionResult GetAverageCompletionTime()
+        public async Task<IActionResult> GetAverageCompletionTime()
         {
+            await Dt.LoadFromDatabaseAsync(_context);
+
             var completedRequests = Dt.Requests
                 .Where(r => r.CompletionDate.HasValue)
                 .ToList();
@@ -34,14 +48,18 @@ namespace BackendAutoSericeCar.Controllers
         }
 
         [HttpGet("delayed")]
-        public IActionResult GetDelayedRequests()
+        public async Task<IActionResult> GetDelayedRequests()
         {
+            await Dt.LoadFromDatabaseAsync(_context);
+
             // Обновляем статус просрочки
             foreach (var request in Dt.Requests)
             {
-                request.IsDelayed = request.PlannedCompletionDate < DateTime.Now
+                request.IsDelayed = request.PlannedCompletionDate < DateTime.UtcNow
                     && request.RequestStatus != "Завершена";
             }
+
+            await Dt.SaveChangesAsync(_context);
 
             var delayed = Dt.Requests
                 .Where(r => r.IsDelayed)
@@ -51,7 +69,7 @@ namespace BackendAutoSericeCar.Controllers
                     r.CarModel,
                     r.ProblemDescription,
                     r.PlannedCompletionDate,
-                    DaysDelayed = (DateTime.Now - r.PlannedCompletionDate).Days
+                    DaysDelayed = (DateTime.UtcNow - r.PlannedCompletionDate).Days
                 })
                 .ToList();
 
