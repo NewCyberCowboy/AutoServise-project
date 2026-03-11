@@ -108,6 +108,27 @@ namespace BackendAutoSericeCar.Data
                     .HasColumnName("is_delayed")
                     .HasDefaultValue(false);
 
+                entity.Property(e => e.AdditionalMechanicIds)
+                    .HasColumnName("additional_mechanic_ids")
+                    .HasDefaultValue(string.Empty);
+
+                entity.Property(e => e.ExtensionRequested)
+                    .HasColumnName("extension_requested")
+                    .HasDefaultValue(false);
+
+                entity.Property(e => e.ExtensionRequestedDays)
+                    .HasColumnName("extension_requested_days");
+
+                entity.Property(e => e.ExtensionStatus)
+                    .HasColumnName("extension_status")
+                    .HasMaxLength(50)
+                    .HasDefaultValue("None");
+
+                entity.Property(e => e.ExtensionComment)
+                    .HasColumnName("extension_comment")
+                    .HasMaxLength(500)
+                    .HasDefaultValue(string.Empty);
+
                 // Связи
                 entity.HasOne(r => r.Master)
                     .WithMany(u => u.CreatedRequests)

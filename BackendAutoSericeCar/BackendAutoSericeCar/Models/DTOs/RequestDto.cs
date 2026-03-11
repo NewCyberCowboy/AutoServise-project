@@ -14,6 +14,11 @@
         public int? MasterId { get; set; }
         public int ClientId { get; set; }
         public bool IsDelayed { get; set; }
+        public string AdditionalMechanicIds { get; set; }
+        public bool ExtensionRequested { get; set; }
+        public int? ExtensionRequestedDays { get; set; }
+        public string ExtensionStatus { get; set; }
+        public string ExtensionComment { get; set; }
 
         // Простые объекты без циклических ссылок
         public UserDto Client { get; set; }

@@ -49,6 +49,11 @@ namespace BackendAutoSericeCar.Controllers
                         MasterId = r.MasterId,
                         ClientId = r.ClientId,
                         IsDelayed = r.IsDelayed,
+                        AdditionalMechanicIds = r.AdditionalMechanicIds,
+                        ExtensionRequested = r.ExtensionRequested,
+                        ExtensionRequestedDays = r.ExtensionRequestedDays,
+                        ExtensionStatus = r.ExtensionStatus,
+                        ExtensionComment = r.ExtensionComment,
                         Client = r.Client != null ? new UserDto
                         {
                             UserId = r.Client.UserId,
@@ -110,6 +115,11 @@ namespace BackendAutoSericeCar.Controllers
                         MasterId = r.MasterId,
                         ClientId = r.ClientId,
                         IsDelayed = r.IsDelayed,
+                        AdditionalMechanicIds = r.AdditionalMechanicIds,
+                        ExtensionRequested = r.ExtensionRequested,
+                        ExtensionRequestedDays = r.ExtensionRequestedDays,
+                        ExtensionStatus = r.ExtensionStatus,
+                        ExtensionComment = r.ExtensionComment,
                         Client = r.Client != null ? new UserDto
                         {
                             UserId = r.Client.UserId,
@@ -202,7 +212,141 @@ namespace BackendAutoSericeCar.Controllers
 
             await Dt.UpdateRequestAsync(_context, request);
 
-            return Ok(request);
+            // Возвращаем объект DTO, чтобы избежать циклических ссылок в JSON
+            var updatedRequestDto = new RequestDto
+            {
+                RequestId = request.RequestId,
+                StartDate = request.StartDate,
+                CarType = request.CarType,
+                CarModel = request.CarModel,
+                ProblemDescription = request.ProblemDescription,
+                RequestStatus = request.RequestStatus,
+                CompletionDate = request.CompletionDate,
+                PlannedCompletionDate = request.PlannedCompletionDate,
+                RepairParts = request.RepairParts,
+                MasterId = request.MasterId,
+                ClientId = request.ClientId,
+                IsDelayed = request.IsDelayed,
+                AdditionalMechanicIds = request.AdditionalMechanicIds,
+                ExtensionRequested = request.ExtensionRequested,
+                ExtensionRequestedDays = request.ExtensionRequestedDays,
+                ExtensionStatus = request.ExtensionStatus,
+                ExtensionComment = request.ExtensionComment,
+                Client = request.Client != null ? new UserDto
+                {
+                    UserId = request.Client.UserId,
+                    Fio = request.Client.Fio,
+                    Phone = request.Client.Phone,
+                    Type = request.Client.Type
+                } : null,
+                Master = request.Master != null ? new UserDto
+                {
+                    UserId = request.Master.UserId,
+                    Fio = request.Master.Fio,
+                    Phone = request.Master.Phone,
+                    Type = request.Master.Type
+                } : null,
+                Comments = request.Comments?.Select(c => new CommentDto
+                {
+                    CommentId = c.CommentId,
+                    Message = c.Message,
+                    CreatedAt = c.CreatedAt,
+                    MasterName = c.Master?.Fio
+                }).ToList() ?? new List<CommentDto>()
+            };
+
+            return Ok(updatedRequestDto);
+        }
+
+        [HttpPost("{id}/additional-mechanic")]
+        public async Task<IActionResult> AddAdditionalMechanic(int id, [FromBody] int mechanicId)
+        {
+            await Dt.LoadFromDatabaseAsync(_context);
+
+            var request = Dt.Requests.FirstOrDefault(r => r.RequestId == id);
+            if (request == null)
+                return NotFound();
+
+            var mechanic = Dt.Users.FirstOrDefault(u => u.UserId == mechanicId && u.Type == "Автомеханик");
+            if (mechanic == null)
+                return BadRequest(new { message = "Указанный механик не найден" });
+
+            var list = string.IsNullOrWhiteSpace(request.AdditionalMechanicIds)
+                ? new List<int>()
+                : request.AdditionalMechanicIds.Split(',').Select(x => int.TryParse(x, out var v) ? v : 0).Where(v => v > 0).ToList();
+
+            if (!list.Contains(mechanicId))
+                list.Add(mechanicId);
+
+            request.AdditionalMechanicIds = string.Join(',', list);
+
+            await Dt.UpdateRequestAsync(_context, request);
+
+            return Ok(new { request.RequestId, request.AdditionalMechanicIds });
+        }
+
+        [HttpPost("{id}/extension-request")]
+        public async Task<IActionResult> RequestExtension(int id, [FromBody] int days)
+        {
+            if (days <= 0)
+                return BadRequest(new { message = "Количество дней должно быть больше 0" });
+
+            await Dt.LoadFromDatabaseAsync(_context);
+            var request = Dt.Requests.FirstOrDefault(r => r.RequestId == id);
+            if (request == null)
+                return NotFound();
+
+            request.ExtensionRequested = true;
+            request.ExtensionRequestedDays = days;
+            request.ExtensionStatus = "Pending";
+            request.ExtensionComment = "Запрос на продление отправлен";
+
+            await Dt.UpdateRequestAsync(_context, request);
+
+            return Ok(new { request.RequestId, request.ExtensionStatus, request.ExtensionRequestedDays });
+        }
+
+        [HttpPut("{id}/extension-approve")]
+        public async Task<IActionResult> ApproveExtension(int id)
+        {
+            await Dt.LoadFromDatabaseAsync(_context);
+            var request = Dt.Requests.FirstOrDefault(r => r.RequestId == id);
+            if (request == null)
+                return NotFound();
+
+            if (!request.ExtensionRequested || request.ExtensionStatus != "Pending")
+                return BadRequest(new { message = "Нет запроса на продление" });
+
+            request.PlannedCompletionDate = request.PlannedCompletionDate.AddDays(request.ExtensionRequestedDays ?? 0);
+            request.ExtensionStatus = "Approved";
+            request.ExtensionComment = "Продление согласовано";
+            request.ExtensionRequested = false;
+            request.ExtensionRequestedDays = null;
+
+            await Dt.UpdateRequestAsync(_context, request);
+
+            return Ok(new { request.RequestId, request.PlannedCompletionDate, request.ExtensionStatus });
+        }
+
+        [HttpPut("{id}/extension-decline")]
+        public async Task<IActionResult> DeclineExtension(int id)
+        {
+            await Dt.LoadFromDatabaseAsync(_context);
+            var request = Dt.Requests.FirstOrDefault(r => r.RequestId == id);
+            if (request == null)
+                return NotFound();
+
+            if (!request.ExtensionRequested || request.ExtensionStatus != "Pending")
+                return BadRequest(new { message = "Нет запроса на продление" });
+
+            request.ExtensionStatus = "Declined";
+            request.ExtensionComment = "Продление отклонено";
+            request.ExtensionRequested = false;
+            request.ExtensionRequestedDays = null;
+
+            await Dt.UpdateRequestAsync(_context, request);
+
+            return Ok(new { request.RequestId, request.ExtensionStatus });
         }
 
         [HttpPost("{id}/comment")]
@@ -250,16 +394,26 @@ namespace BackendAutoSericeCar.Controllers
                     return NotFound();
                 }
 
-                // Формируем информацию для QR-кода
-                string qrContent = $@"
-                    Заявка #{request.RequestId}
-                    Автомобиль: {request.CarModel} ({request.CarType})
-                    Статус: {request.RequestStatus}
-                    Клиент: {request.Client?.Fio ?? "Не указан"}
-                    Механик: {request.Master?.Fio ?? "Не назначен"}
-                    Дата создания: {request.StartDate:dd.MM.yyyy}
-                    Плановая дата: {request.PlannedCompletionDate:dd.MM.yyyy}
-                    Описание: {request.ProblemDescription}";
+                // Если заявка завершена, QR-код направляет на форму обратной связи
+                const string feedbackFormUrl = "https://docs.google.com/forms/d/e/1FAIpQLSdhZcExx6LSIXxk0ub55mSu-WIh23WYdGG9HY5EZhLDo7P8eA/viewform";
+
+                string qrContent;
+                if (request.RequestStatus == "Завершена")
+                {
+                    qrContent = feedbackFormUrl;
+                }
+                else
+                {
+                    qrContent = $@"
+                        Заявка #{request.RequestId}
+                        Автомобиль: {request.CarModel} ({request.CarType})
+                        Статус: {request.RequestStatus}
+                        Клиент: {request.Client?.Fio ?? "Не указан"}
+                        Механик: {request.Master?.Fio ?? "Не назначен"}
+                        Дата создания: {request.StartDate:dd.MM.yyyy}
+                        Плановая дата: {request.PlannedCompletionDate:dd.MM.yyyy}
+                        Описание: {request.ProblemDescription}";
+                }
 
                 // Создаем QR-код
                 using (QRCodeGenerator qrGenerator = new QRCodeGenerator())

@@ -351,3 +351,55 @@
 .qr-modal-btn:first-child:hover {
     background: #218838;
 }
+
+.qr-feedback-note {
+    background: #e6f7ff;
+    border: 1px solid #91d5ff;
+    color: #0050b3;
+    padding: 10px 15px;
+    border-radius: 8px;
+    text-align: center;
+    margin-top: 10px;
+    max-width: 380px;
+}
+
+.qr-feedback-note p {
+    margin: 0;
+    font-size: 14px;
+    line-height: 1.5;
+}
+
+.extension-approval-client {
+    background: #fff3cd;
+    border: 1px solid #ffeeba;
+    color: #856404;
+    padding: 12px;
+    border-radius: 8px;
+    margin: 20px 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.extension-approval-client p {
+    margin: 0;
+    font-weight: 500;
+}
+
+.extension-approval-client button {
+    padding: 8px 14px;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    width: fit-content;
+}
+
+.extension-approval-client button:first-child {
+    background: #28a745;
+    color: white;
+}
+
+.extension-approval-client button:last-child {
+    background: #dc3545;
+    color: white;
+}

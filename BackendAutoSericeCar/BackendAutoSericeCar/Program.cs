@@ -34,6 +34,15 @@ using (var scope = app.Services.CreateScope())
     // Создание базы данных, если её нет
     await dbContext.Database.EnsureCreatedAsync();
 
+    // Обновление схемы при работе без миграций (добавляем поля, если они отсутствуют)
+    await dbContext.Database.ExecuteSqlRawAsync(@"
+        ALTER TABLE requests ADD COLUMN IF NOT EXISTS additional_mechanic_ids text NOT NULL DEFAULT '';
+        ALTER TABLE requests ADD COLUMN IF NOT EXISTS extension_requested boolean NOT NULL DEFAULT false;
+        ALTER TABLE requests ADD COLUMN IF NOT EXISTS extension_requested_days integer NULL;
+        ALTER TABLE requests ADD COLUMN IF NOT EXISTS extension_status text NOT NULL DEFAULT 'None';
+        ALTER TABLE requests ADD COLUMN IF NOT EXISTS extension_comment text NOT NULL DEFAULT '';
+    ");
+
     // Инициализация тестовыми данными
     await Dt.InitializeAsync(dbContext);
 }

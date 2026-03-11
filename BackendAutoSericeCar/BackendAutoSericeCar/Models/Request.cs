@@ -51,5 +51,20 @@ namespace BackendAutoSericeCar.Models
         public User? Client { get; set; }
 
         public ICollection<Comment>? Comments { get; set; }
+
+        [Column("additional_mechanic_ids")]
+        public string AdditionalMechanicIds { get; set; } = string.Empty;
+
+        [Column("extension_requested")]
+        public bool ExtensionRequested { get; set; } = false;
+
+        [Column("extension_requested_days")]
+        public int? ExtensionRequestedDays { get; set; }
+
+        [Column("extension_status")]
+        public string ExtensionStatus { get; set; } = "None";
+
+        [Column("extension_comment")]
+        public string ExtensionComment { get; set; } = string.Empty;
     }
 }

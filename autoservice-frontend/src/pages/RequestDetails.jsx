@@ -13,6 +13,9 @@ function RequestDetails() {
     const [loading, setLoading] = useState(true);
     const [qrError, setQrError] = useState(false);
     const [qrLoading, setQrLoading] = useState(false);
+    const [additionalMechanicId, setAdditionalMechanicId] = useState('');
+    const [selectedAdditionalMechanicId, setSelectedAdditionalMechanicId] = useState('');
+    const [deadlineNotification, setDeadlineNotification] = useState('');
     const user = JSON.parse(localStorage.getItem('user') || '{}');
     const [showQrModal, setShowQrModal] = useState(false);
     useEffect(() => {
@@ -106,6 +109,7 @@ function RequestDetails() {
                 await api.put(`/quality/extend/${id}`, parseInt(days), {
                     headers: { 'Content-Type': 'application/json' }
                 });
+                setDeadlineNotification(`Срок выполнения продлен на ${days} дней`);
                 loadData();
                 alert(`Срок выполнения продлен на ${days} дней`);
             } catch (error) {
@@ -128,6 +132,59 @@ function RequestDetails() {
         }
     };
 
+    const handleAddAdditionalMechanic = async (mechanicId) => {
+        if (!mechanicId) return;
+
+        try {
+            await api.post(`/request/${id}/additional-mechanic`, mechanicId, {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            loadData();
+            alert('Дополнительный механик добавлен');
+        } catch (error) {
+            console.error('Ошибка добавления дополнительного механика:', error);
+            alert('Не удалось добавить дополнительного механика');
+        }
+    };
+
+    const handleRequestExtension = async () => {
+        const days = prompt('На сколько дней продлить заявку?', '3');
+        if (!days || isNaN(days) || Number(days) <= 0) return;
+
+        try {
+            await api.post(`/request/${id}/extension-request`, Number(days), {
+                headers: { 'Content-Type': 'application/json' }
+            });
+            loadData();
+            alert('Запрос на продление отправлен клиенту');
+        } catch (error) {
+            console.error('Ошибка запроса на продление:', error);
+            alert('Не удалось отправить запрос на продление');
+        }
+    };
+
+    const handleApproveExtension = async () => {
+        try {
+            await api.put(`/request/${id}/extension-approve`);
+            loadData();
+            alert('Запрос на продление одобрен');
+        } catch (error) {
+            console.error('Ошибка одобрения продления:', error);
+            alert('Не удалось одобрить продление');
+        }
+    };
+
+    const handleDeclineExtension = async () => {
+        try {
+            await api.put(`/request/${id}/extension-decline`);
+            loadData();
+            alert('Запрос на продление отклонен');
+        } catch (error) {
+            console.error('Ошибка отклонения продления:', error);
+            alert('Не удалось отклонить продление');
+        }
+    };
+
     const handleSetDeadline = async () => {
         const newDate = prompt('Введите новую плановую дату (YYYY-MM-DD)', request.plannedCompletionDate?.split('T')[0] || '');
         if (!newDate) return;
@@ -142,6 +199,7 @@ function RequestDetails() {
             await api.put(`/quality/deadline/${id}`, parsed.toISOString(), {
                 headers: { 'Content-Type': 'application/json' }
             });
+            setDeadlineNotification(`Плановая дата изменена на ${newDate}`);
             loadData();
             alert(`Плановая дата изменена на ${newDate}`);
         } catch (error) {
@@ -178,6 +236,11 @@ function RequestDetails() {
                 printWindow.print();
             };
         }
+    };
+
+    const handleOpenFeedback = () => {
+        const feedbackUrl = 'https://docs.google.com/forms/d/e/1FAIpQLSdhZcExx6LSIXxk0ub55mSu-WIh23WYdGG9HY5EZhLDo7P8eA/viewform';
+        window.open(feedbackUrl, '_blank');
     };
 
     if (loading) return <div className="loading">Загрузка...</div>;
@@ -227,6 +290,15 @@ function RequestDetails() {
                             </div>
                         )}
                     </div>
+
+                    {(user.role === 'Клиент' && request.requestStatus === 'Завершена') && (
+                        <div className="qr-feedback-note">
+                            <p>
+                                Оцените нашу работу! Отсканируйте QR-код и перейдите на форму обратной связи.
+                            </p>
+                        </div>
+                    )}
+
                 </div>
                 {showQrModal && (
                     <div className="qr-modal" onClick={() => setShowQrModal(false)}>
@@ -278,6 +350,12 @@ function RequestDetails() {
                             <span className="label">Плановая дата:</span>
                             <span className="value">{new Date(request.plannedCompletionDate).toLocaleDateString('ru-RU')}</span>
                         </div>
+                        {request.extensionStatus && request.extensionStatus.toLowerCase() !== 'none' && (
+                            <div className="info-row">
+                                <span className="label">Статус продления:</span>
+                                <span className="value">{request.extensionStatus} {request.extensionRequestedDays ? `(${request.extensionRequestedDays} дней)` : ''}</span>
+                            </div>
+                        )}
                         {request.completionDate && (
                             <div className="info-row">
                                 <span className="label">Дата завершения:</span>
@@ -310,7 +388,7 @@ function RequestDetails() {
 
                             {request.requestStatus !== 'Завершена' && (
                                 <>
-                                    {(request.requestStatus === 'Новая' && (user.role === 'Администратор' || user.role === 'Менеджер')) && (
+                                    {(user.role === 'Администратор' || user.role === 'Менеджер') && request.requestStatus !== 'Завершена' && (
                                         <div className="assign-master">
                                             <label>Назначить/сменить мастера:</label>
                                             <select
@@ -327,6 +405,49 @@ function RequestDetails() {
                                             <button className="btn-unassign" onClick={handleUnassignMaster}>
                                                 Снять механика
                                             </button>
+
+                                            <div className="additional-mechanic">
+                                                <label>Добавить доп. механика:</label>
+                                                <select
+                                                    value={selectedAdditionalMechanicId}
+                                                    onChange={(e) => setSelectedAdditionalMechanicId(e.target.value)}
+                                                >
+                                                    <option value="">Выберите механика</option>
+                                                    {masters
+                                                        .filter(m => m.userId !== request.masterId)
+                                                        .map(master => (
+                                                            <option key={master.userId} value={master.userId}>
+                                                                {master.fio}
+                                                            </option>
+                                                        ))}
+                                                </select>
+                                                <button
+                                                    className="btn-add-mechanic"
+                                                    onClick={async () => {
+                                                        const idToAdd = Number(selectedAdditionalMechanicId);
+                                                        if (Number.isInteger(idToAdd) && idToAdd > 0) {
+                                                            await handleAddAdditionalMechanic(idToAdd);
+                                                            setSelectedAdditionalMechanicId('');
+                                                        } else {
+                                                            alert('Выберите корректного механика из списка');
+                                                        }
+                                                    }}
+                                                >
+                                                    Добавить механика
+                                                </button>
+                                            </div>
+
+                                            {request.additionalMechanicIds && request.additionalMechanicIds.trim() !== '' && (
+                                                <div className="additional-mechanic-list">
+                                                    <strong>Доп. механики в заявке:</strong>
+                                                    <ul>
+                                                        {request.additionalMechanicIds.split(',').filter(x => x).map((id) => {
+                                                            const master = masters.find(m => m.userId === Number(id));
+                                                            return <li key={id}>{master ? master.fio : `Механик #${id}`}</li>;
+                                                        })}
+                                                    </ul>
+                                                </div>
+                                            )}
                                         </div>
                                     )}
 
@@ -343,7 +464,7 @@ function RequestDetails() {
                                                     Завершить ремонт
                                                 </button>
                                             )}
-                                            {request.requestStatus === 'Готова к выдачи' && (
+                                            {request.requestStatus === 'Готова к выдаче' && (
                                                 <button onClick={() => handleStatusChange('Завершена')}>
                                                     Выдать клиенту
                                                 </button>
@@ -359,13 +480,38 @@ function RequestDetails() {
                                             <button className="btn-set-deadline" onClick={handleSetDeadline}>
                                                 Установить дату
                                             </button>
+                                            {request.requestStatus !== 'Завершена' && (
+                                                <button className="btn-request-extension" onClick={handleRequestExtension}>
+                                                    Отправить запрос на продление клиенту
+                                                </button>
+                                            )}
                                         </>
                                     )}
+
+                                    {request.requestStatus === 'Завершена' && (
+                                        <button className="btn-feedback" onClick={handleOpenFeedback}>
+                                            Перейти к форме обратной связи
+                                        </button>
+                                    )}
                                 </>
+                            )}
+
+                            {deadlineNotification && (
+                                <div className="deadline-notification">
+                                    <p>{deadlineNotification}</p>
+                                </div>
                             )}
                         </div>
                     )}
                 </div>
+
+                {(user.role === 'Клиент' && (request.extensionRequested === true || (request.extensionStatus && request.extensionStatus.toLowerCase() === 'pending'))) && (
+                    <div className="extension-approval-client">
+                        <p>Клиент, просим вас оценить необходимость продления на {request.extensionRequestedDays} дней.</p>
+                        <button onClick={handleApproveExtension}>Согласовать</button>
+                        <button onClick={handleDeclineExtension}>Отклонить</button>
+                    </div>
+                )}
 
                 <div className="comments-section">
                     <h3>Комментарии</h3>
