@@ -1,0 +1,40 @@
+CREATE DATABASE AutoServiceDB;
+
+CREATE TABLE users (
+    user_id SERIAL PRIMARY KEY,
+    fio VARCHAR(100) NOT NULL,
+    phone VARCHAR(20),
+    login VARCHAR(50) UNIQUE NOT NULL,
+    password_hash VARCHAR(255) NOT NULL,
+    role_name VARCHAR(50) NOT NULL
+);
+
+
+CREATE TABLE requests (
+    request_id SERIAL PRIMARY KEY,
+    start_date TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    car_type VARCHAR(50) NOT NULL,
+    car_model VARCHAR(50) NOT NULL,
+    problem_description TEXT NOT NULL,
+    status_name VARCHAR(50) NOT NULL,
+    actual_completion_date TIMESTAMP,
+    planned_completion_date DATE NOT NULL,
+    work_description TEXT,
+    mechanic_id INTEGER REFERENCES users(user_id) ON DELETE SET NULL,
+    client_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+    is_delayed BOOLEAN DEFAULT FALSE
+);
+
+CREATE TABLE comments (
+    comment_id SERIAL PRIMARY KEY,
+    message TEXT NOT NULL,
+    master_id INTEGER NOT NULL REFERENCES users(user_id) ON DELETE RESTRICT,
+    request_id INTEGER NOT NULL REFERENCES requests(request_id) ON DELETE CASCADE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE INDEX idx_requests_mechanic ON requests(mechanic_id);
+CREATE INDEX idx_requests_client ON requests(client_id);
+CREATE INDEX idx_requests_status ON requests(status_name);
+CREATE INDEX idx_comments_request ON comments(request_id);
+CREATE INDEX idx_comments_master ON comments(master_id);
